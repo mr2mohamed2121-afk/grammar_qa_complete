@@ -1,0 +1,5 @@
+class SignOutUseCase {
+  Future<void> call() async {
+    // TODO: implement actual sign out
+  }
+}

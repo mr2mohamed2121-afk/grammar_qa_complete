@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "543989259232",
+    "project_id": "arabic-grammar-app-464bf",
+    "storage_bucket": "arabic-grammar-app-464bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:543989259232:android:cae50f3072b70183cf2985",
+        "android_client_info": {
+          "package_name": "com.example.grammar_qa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9F-u2Nz_7Ja6yPZmq-DMPIi2oQ01Mqms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

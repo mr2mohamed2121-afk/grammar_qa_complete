@@ -1,0 +1,8 @@
+import '../entities/user_entity.dart';
+
+class SignInUseCase {
+  Future<UserEntity> call(String email, String password) async {
+    // TODO: implement actual sign in
+    throw UnimplementedError();
+  }
+}

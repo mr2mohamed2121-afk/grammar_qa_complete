@@ -1,0 +1,232 @@
+
+lib/
+├── main.dart                           # Entry point
+├── app.dart                            # App widget
+├── injection.dart                      # GetIt setup
+├── injectable_module.dart              # Injectable module
+│
+├── core/                               # Core utilities
+│   ├── theme/
+│   │   └── app_theme.dart              # Theme & colors
+│   ├── constants/
+│   │   ├── app_constants.dart          # App constants
+│   │   └── api_constants.dart          # API endpoints
+│   ├── errors/
+│   │   ├── exceptions.dart             # Custom exceptions
+│   │   └── failures.dart               # Failure classes
+│   ├── usecases/
+│   │   └── usecase.dart                # Base usecase
+│   ├── utils/
+│   │   ├── helpers.dart                # Helper functions
+│   │   └── validators.dart             # Input validators
+│   └── widgets/
+│       ├── loading_widget.dart         # Loading indicator
+│       ├── error_widget.dart           # Error display
+│       └── empty_state_widget.dart     # Empty state
+│
+├── core/services/                      # Shared services
+│   ├── local_storage_service.dart      # Hive + SharedPreferences
+│   ├── connectivity_service.dart       # Network check
+│   └── analytics_service.dart          # Firebase Analytics
+│
+├── features/                           # Feature-based modules
+│   │
+│   ├── auth/                           # Authentication feature
+│   │   ├── data/
+│   │   │   ├── models/
+│   │   │   │   └── user_model.dart     # User model
+│   │   │   ├── repositories/
+│   │   │   │   └── auth_repository.dart
+│   │   │   └── datasources/
+│   │   │       ├── auth_remote_source.dart
+│   │   │       └── auth_local_source.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── user_entity.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── auth_repository_interface.dart
+│   │   │   └── usecases/
+│   │   │       ├── sign_in.dart
+│   │   │       ├── sign_up.dart
+│   │   │       ├── sign_out.dart
+│   │   │       └── get_current_user.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── auth_bloc.dart
+│   │       │   ├── auth_event.dart
+│   │       │   └── auth_state.dart
+│   │       ├── screens/
+│   │       │   ├── login_screen.dart
+│   │       │   ├── signup_screen.dart
+│   │       │   └── forgot_password_screen.dart
+│   │       └── widgets/
+│   │           ├── auth_form.dart
+│   │           └── social_login_buttons.dart
+│   │
+│   ├── quiz/                           # Quiz feature
+│   │   ├── data/
+│   │   │   ├── models/
+│   │   │   │   ├── question_model.dart
+│   │   │   │   ├── quiz_result_model.dart
+│   │   │   │   └── category_model.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── quiz_repository.dart
+│   │   │   └── datasources/
+│   │   │       ├── quiz_remote_source.dart
+│   │   │       └── quiz_local_source.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── question_entity.dart
+│   │   │   │   └── quiz_result_entity.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── quiz_repository_interface.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_questions.dart
+│   │   │       ├── submit_quiz.dart
+│   │   │       └── get_quiz_history.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── quiz_bloc.dart
+│   │       │   ├── quiz_event.dart
+│   │       │   └── quiz_state.dart
+│   │       ├── screens/
+│   │       │   ├── quiz_screen.dart
+│   │       │   ├── quiz_result_screen.dart
+│   │       │   └── categories_screen.dart
+│   │       └── widgets/
+│   │           ├── question_card.dart
+│   │           ├── answer_option.dart
+│   │           ├── progress_bar.dart
+│   │           └── timer_widget.dart
+│   │
+│   ├── home/                           # Home feature
+│   │   └── presentation/
+│   │       ├── screens/
+│   │       │   └── home_screen.dart
+│   │       └── widgets/
+│   │           ├── category_card.dart
+│   │           ├── recent_activity.dart
+│   │           └── stats_overview.dart
+│   │
+│   ├── leaderboard/                    # Leaderboard feature
+│   │   ├── data/
+│   │   │   ├── models/
+│   │   │   │   └── leaderboard_entry_model.dart
+│   │   │   └── repositories/
+│   │   │       └── leaderboard_repository.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── leaderboard_entry_entity.dart
+│   │   │   └── usecases/
+│   │   │       └── get_leaderboard.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── leaderboard_bloc.dart
+│   │       │   ├── leaderboard_event.dart
+│   │       │   └── leaderboard_state.dart
+│   │       └── screens/
+│   │           └── leaderboard_screen.dart
+│   │
+│   ├── premium/                        # Premium/Payments feature
+│   │   ├── data/
+│   │   │   ├── models/
+│   │   │   │   ├── subscription_model.dart
+│   │   │   │   └── payment_model.dart
+│   │   │   └── repositories/
+│   │   │       └── payment_repository.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── subscription_entity.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_products.dart
+│   │   │       ├── purchase_product.dart
+│   │   │       └── check_premium_status.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── premium_bloc.dart
+│   │       │   ├── premium_event.dart
+│   │       │   └── premium_state.dart
+│   │       ├── screens/
+│   │       │   └── premium_screen.dart
+│   │       └── widgets/
+│   │           ├── plan_card.dart
+│   │           ├── reward_card.dart
+│   │           └── points_display.dart
+│   │
+│   ├── ads/                            # Ads feature
+│   │   ├── data/
+│   │   │   └── repositories/
+│   │   │       └── ads_repository.dart
+│   │   ├── domain/
+│   │   │   └── usecases/
+│   │   │       ├── show_banner_ad.dart
+│   │   │       ├── show_interstitial_ad.dart
+│   │   │       └── show_rewarded_ad.dart
+│   │   └── presentation/
+│   │       ├── widgets/
+│   │       │   ├── ad_banner_widget.dart
+│   │       │   ├── rewarded_ad_button.dart
+│   │       │   └── triple_ad_points_button.dart
+│   │       └── bloc/
+│   │           └── ads_bloc.dart
+│   │
+│   ├── admin/                          # Admin Dashboard feature
+│   │   ├── data/
+│   │   │   ├── models/
+│   │   │   │   └── admin_stats_model.dart
+│   │   │   └── repositories/
+│   │   │       └── admin_repository.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── admin_stats_entity.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_admin_stats.dart
+│   │   │       ├── get_all_users.dart
+│   │   │       ├── manage_question.dart
+│   │   │       └── toggle_user_premium.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── admin_bloc.dart
+│   │       │   ├── admin_event.dart
+│   │       │   └── admin_state.dart
+│   │       ├── screens/
+│   │       │   ├── admin_dashboard.dart
+│   │       │   ├── users_management_screen.dart
+│   │       │   ├── questions_management_screen.dart
+│   │       │   └── analytics_screen.dart
+│   │       └── widgets/
+│   │           ├── stats_card.dart
+│   │           ├── user_data_table.dart
+│   │           ├── question_form.dart
+│   │           └── revenue_chart.dart
+│   │
+│   └── flashcards/                     # Flashcards feature
+│       ├── data/
+│       │   ├── models/
+│       │   │   └── flashcard_model.dart
+│       │   └── repositories/
+│       │       └── flashcard_repository.dart
+│       ├── domain/
+│       │   ├── entities/
+│       │   │   └── flashcard_entity.dart
+│       │   └── usecases/
+│       │       ├── get_flashcards.dart
+│       │       ├── create_flashcard.dart
+│       │       └── sync_flashcards.dart
+│       └── presentation/
+│           ├── bloc/
+│           │   ├── flashcard_bloc.dart
+│           │   ├── flashcard_event.dart
+│           │   └── flashcard_state.dart
+│           ├── screens/
+│           │   ├── flashcards_screen.dart
+│           │   └── flashcard_detail_screen.dart
+│           └── widgets/
+│               ├── flashcard_card.dart
+│               └── flashcard_deck.dart
+│
+└── services/                           # Legacy services (to be migrated)
+    ├── firestore_service.dart
+    ├── auth_service.dart
+    ├── admob_service.dart
+    └── payment_service.dart

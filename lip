@@ -1,0 +1,170 @@
+
+import 'package:injectable/injectable.dart';
+import '../core/services/local_storage_service.dart';
+
+@lazySingleton
+class AchievementsService {
+  final LocalStorageService _localStorage;
+
+  AchievementsService(this._localStorage);
+
+  // Achievement definitions
+  static final List<Achievement> _achievements = [
+    Achievement(
+      id: 'first_quiz',
+      name: 'أول خطوة',
+      description: 'أكمل أول اختبار',
+      icon: '🎯',
+      condition: (stats) => stats['totalQuizzes'] >= 1,
+      points: 10,
+    ),
+    Achievement(
+      id: 'perfect_score',
+      name: 'الإتقان',
+      description: 'احصل على 100% في اختبار',
+      icon: '💯',
+      condition: (stats) => stats['perfectScores'] >= 1,
+      points: 50,
+    ),
+    Achievement(
+      id: 'streak_7',
+      name: 'أسبوع النجاح',
+      description: 'حافظ على سلسلة نجاح لمدة 7 أيام',
+      icon: '🔥',
+      condition: (stats) => (stats['streakDays'] ?? 0) >= 7,
+      points: 30,
+    ),
+    Achievement(
+      id: 'streak_30',
+      name: 'شهر النجاح',
+      description: 'حافظ على سلسلة نجاح لمدة 30 يوم',
+      icon: '🔥🔥',
+      condition: (stats) => (stats['streakDays'] ?? 0) >= 30,
+      points: 100,
+    ),
+    Achievement(
+      id: 'master_grammar',
+      name: 'أستاذ النحو',
+      description: 'أكمل جميع مستويات النحو',
+      icon: '👑',
+      condition: (stats) => (stats['completedCategories'] ?? []).contains('grammar'),
+      points: 200,
+    ),
+    Achievement(
+      id: 'speed_demon',
+      name: 'السريع',
+      description: 'أكمل اختبار في أقل من دقيقة',
+      icon: '⚡',
+      condition: (stats) => (stats['fastestQuiz'] ?? 999) < 60,
+      points: 25,
+    ),
+    Achievement(
+      id: 'persistent',
+      name: 'المثابر',
+      description: 'أكمل 50 اختبار',
+      icon: '📚',
+      condition: (stats) => (stats['totalQuizzes'] ?? 0) >= 50,
+      points: 75,
+    ),
+    Achievement(
+      id: 'social_butterfly',
+      name: 'المشارك',
+      description: 'شارك شهادة على وسائل التواصل',
+      icon: '🦋',
+      condition: (stats) => (stats['shares'] ?? 0) >= 1,
+      points: 20,
+    ),
+    Achievement(
+      id: 'premium_user',
+      name: 'المميز',
+      description: 'اشترك في Premium',
+      icon: '💎',
+      condition: (stats) => stats['isPremium'] == true,
+      points: 0,
+    ),
+    Achievement(
+      id: 'helper',
+      name: 'المساعد',
+      description: 'استخدم AI Tutor 10 مرات',
+      icon: '🤖',
+      condition: (stats) => (stats['aiTutorUses'] ?? 0) >= 10,
+      points: 40,
+    ),
+  ];
+
+  // Check and award achievements
+  Future<List<Achievement>> checkAchievements(String userId) async {
+    final stats = _getUserStats(userId);
+    final newlyUnlocked = <Achievement>[];
+
+    for (final achievement in _achievements) {
+      if (!_isUnlocked(userId, achievement.id) && achievement.condition(stats)) {
+        await _unlockAchievement(userId, achievement);
+        newlyUnlocked.add(achievement);
+      }
+    }
+
+    return newlyUnlocked;
+  }
+
+  Map<String, dynamic> _getUserStats(String userId) {
+    return _localStorage.getUserData() ?? {};
+  }
+
+  bool _isUnlocked(String userId, String achievementId) {
+    final data = _localStorage.getUserData();
+    if (data == null) return false;
+
+    final unlocked = data['unlockedAchievements'] as List<dynamic>?;
+    return unlocked?.contains(achievementId) ?? false;
+  }
+
+  Future<void> _unlockAchievement(String userId, Achievement achievement) async {
+    final data = _localStorage.getUserData() ?? {};
+
+    final unlocked = (data['unlockedAchievements'] as List<dynamic>?) ?? [];
+    unlocked.add(achievement.id);
+    data['unlockedAchievements'] = unlocked;
+
+    // Add points
+    final currentPoints = data['totalPoints'] ?? 0;
+    data['totalPoints'] = currentPoints + achievement.points;
+
+    await _localStorage.saveUserData(data);
+  }
+
+  List<Achievement> getAllAchievements() {
+    return _achievements;
+  }
+
+  List<Achievement> getUnlockedAchievements(String userId) {
+    return _achievements.where((a) => _isUnlocked(userId, a.id)).toList();
+  }
+
+  List<Achievement> getLockedAchievements(String userId) {
+    return _achievements.where((a) => !_isUnlocked(userId, a.id)).toList();
+  }
+
+  double getProgressPercentage(String userId) {
+    final unlocked = getUnlockedAchievements(userId).length;
+    return (unlocked / _achievements.length) * 100;
+  }
+}
+
+class Achievement {
+  final String id;
+  final String name;
+  final String description;
+  final String icon;
+  final bool Function(Map<String, dynamic>) condition;
+  final int points;
+
+  Achievement({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.condition,
+    required this.points,
+  });
+}
