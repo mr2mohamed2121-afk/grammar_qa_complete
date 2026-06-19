@@ -74,16 +74,16 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startAnimations() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds:500));
     _logoController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 1200));
     _textController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 800));
     _particlesController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 2500));
+    await Future.delayed(const Duration(milliseconds: 4000));
     widget.onComplete();
   }
 
