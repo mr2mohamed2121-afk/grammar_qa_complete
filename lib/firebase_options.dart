@@ -32,13 +32,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    authDomain: 'YOUR_AUTH_DOMAIN',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    measurementId: 'YOUR_MEASUREMENT_ID',
+    apiKey: 'AIzaSyAcUAtWs9GqiKgs1QUrm02g4htv2MVP9aA',
+    appId: '1:446485845249:web:95b16c9ee00395e2f6f700',
+    messagingSenderId: '446485845249',
+    projectId: 'grammar-qa-app',
+    authDomain: 'grammar-qa-app.firebaseapp.com',
+    storageBucket: 'grammar-qa-app.firebasestorage.app',
+    measurementId: 'G-W0MDX96PBS',
   );
 
   static const FirebaseOptions android = FirebaseOptions(

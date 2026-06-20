@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import '../entities/user_entity.dart';
 
 class SignInParams {
@@ -14,42 +15,81 @@ class SignUpParams {
 }
 
 class SignInUseCase {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<UserEntity> call(SignInParams params) async {
-    // TODO: Implement actual Firebase Auth
-    // مؤقت: رجّع user وهمي
-    return UserEntity(
-      id: '1',
-      email: params.email,
-      name: 'Test User',
-      isAdmin: false,
-      isPremium: false,
-    );
+    try {
+      final result = await _auth.signInWithEmailAndPassword(
+        email: params.email,
+        password: params.password,
+      );
+      
+      final user = result.user;
+      if (user == null) throw Exception('Login failed');
+      
+      return UserEntity(
+        id: user.uid,
+        email: user.email!,
+        name: user.displayName ?? 'User',
+        isAdmin: false,
+        isPremium: false,
+      );
+    } catch (e) {
+      throw Exception('Login failed: ${e.toString()}');
+    }
   }
 }
 
 class SignUpUseCase {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<UserEntity> call(SignUpParams params) async {
-    // TODO: Implement actual Firebase Auth
-    return UserEntity(
-      id: '1',
-      email: params.email,
-      name: params.name,
-      isAdmin: false,
-      isPremium: false,
-    );
+    try {
+      final result = await _auth.createUserWithEmailAndPassword(
+        email: params.email,
+        password: params.password,
+      );
+      
+      final user = result.user;
+      if (user == null) throw Exception('Sign up failed');
+      
+      // Update display name
+      await user.updateDisplayName(params.name);
+      
+      return UserEntity(
+        id: user.uid,
+        email: user.email!,
+        name: params.name,
+        isAdmin: false,
+        isPremium: false,
+      );
+    } catch (e) {
+      throw Exception('Sign up failed: ${e.toString()}');
+    }
   }
 }
 
 class SignOutUseCase {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<void> call() async {
-    // TODO: Implement actual sign out
+    await _auth.signOut();
   }
 }
 
 class GetCurrentUserUseCase {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<UserEntity?> call() async {
-    // TODO: Implement actual get current user
-    // مؤقت: رجّع null عشان يظهر Login Screen
-    return null;
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    
+    return UserEntity(
+      id: user.uid,
+      email: user.email!,
+      name: user.displayName ?? 'User',
+      isAdmin: false,
+      isPremium: false,
+    );
   }
 }
