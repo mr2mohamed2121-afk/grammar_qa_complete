@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../features/questions/models/question_model.dart';
+import '../features/quiz/models/quiz_result_model.dart';
 import '../features/auth/models/user_model.dart';
-import '../features/quiz/models/quiz_result.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Users
+  // ==================== Users ====================
+  
   Future<void> createUser(UserModel user) async {
     await _firestore.collection('users').doc(user.id).set(user.toJson());
   }
@@ -14,137 +15,135 @@ class FirestoreService {
   Future<UserModel?> getUser(String userId) async {
     final doc = await _firestore.collection('users').doc(userId).get();
     if (!doc.exists) return null;
-    return UserModel.fromJson(doc.data()!..['id'] = doc.id);
+    final data = doc.data()!;
+    data['id'] = doc.id;
+    return UserModel.fromJson(data);
   }
 
-  Future<void> updateUser(String userId, Map<String, dynamic> data) async {
-    await _firestore.collection('users').doc(userId).update(data);
+  Future<Map<String, dynamic>?> getUserData(String userId) async {
+    final doc = await _firestore.collection('users').doc(userId).get();
+    return doc.data();
   }
 
-  // Questions
-  Future<List<Question>> getQuestions({
+  Future<void> updateUserScore(String userId, int score) async {
+    final docRef = _firestore.collection('users').doc(userId);
+    final doc = await docRef.get();
+
+    if (doc.exists) {
+      final currentData = doc.data() ?? {};
+      await docRef.update({
+        'totalScore': ((currentData['totalScore'] ?? 0) as num) + score,
+      });
+    }
+  }
+
+  // ==================== Questions ====================
+  
+  Future<List<QuestionModel>> getQuestions({
     String? category,
-    DifficultyLevel? difficulty,
-    int limit = 50,
+    String? difficulty,
+    int? limit,
   }) async {
-    Query query = _firestore.collection('questions')
-        .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
-        .limit(limit);
+    Query<Map<String, dynamic>> query = _firestore.collection('questions');
 
-    if (category != null) {
+    if (category != null && category.isNotEmpty) {
       query = query.where('category', isEqualTo: category);
     }
-    if (difficulty != null) {
-      query = query.where('difficulty', isEqualTo: difficulty.name);
+    if (difficulty != null && difficulty.isNotEmpty) {
+      query = query.where('difficulty', isEqualTo: difficulty);
+    }
+    if (limit != null && limit > 0) {
+      query = query.limit(limit);
     }
 
     final snapshot = await query.get();
-    return snapshot.docs.map((doc) => 
-      Question.fromJson(doc.data() as Map<String, dynamic>..['id'] = doc.id)
-    ).toList();
+    return snapshot.docs
+        .map((doc) => QuestionModel.fromFirestore(doc))
+        .toList();
   }
 
-  Future<Question?> getQuestion(String questionId) async {
-    final doc = await _firestore.collection('questions').doc(questionId).get();
-    if (!doc.exists) return null;
-    return Question.fromJson(doc.data()!..['id'] = doc.id);
+  Future<void> addQuestion(QuestionModel question) async {
+    await _firestore.collection('questions').add(question.toMap());
   }
 
-  // Quiz Results
-  Future<void> saveQuizResult(QuizResult result) async {
-    await _firestore.collection('quiz_results').doc(result.id).set(result.toJson());
+  Future<void> updateQuestion(String id, QuestionModel question) async {
+    await _firestore.collection('questions').doc(id).update(question.toMap());
   }
 
-  Future<List<QuizResult>> getUserQuizResults(String userId, {int limit = 50}) async {
-    final snapshot = await _firestore.collection('quiz_results')
+  Future<void> deleteQuestion(String id) async {
+    await _firestore.collection('questions').doc(id).delete();
+  }
+
+  // ==================== Quiz Results ====================
+  
+  Future<void> saveQuizResult(QuizResultModel result) async {
+    await _firestore.collection('quiz_results').add(result.toMap());
+  }
+
+  Future<List<QuizResultModel>> getUserResults(String userId) async {
+    final snapshot = await _firestore
+        .collection('quiz_results')
         .where('userId', isEqualTo: userId)
         .orderBy('completedAt', descending: true)
-        .limit(limit)
         .get();
 
-    return snapshot.docs.map((doc) => 
-      QuizResult.fromJson(doc.data() as Map<String, dynamic>..['id'] = doc.id)
-    ).toList();
+    return snapshot.docs
+        .map((doc) => QuizResultModel.fromFirestore(doc))
+        .toList();
   }
 
-  // Flashcards
-  Future<void> saveFlashcard(String userId, Map<String, dynamic> flashcard) async {
-    await _firestore.collection('flashcards').add({
-      ...flashcard,
-      'userId': userId,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> getUserFlashcards(String userId) async {
-    final snapshot = await _firestore.collection('flashcards')
-        .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .get();
-
-    return snapshot.docs.map((doc) => {
-      'id': doc.id,
-      ...doc.data() as Map<String, dynamic>,
-    }).toList();
-  }
-
-  // Categories
-  Future<List<Map<String, dynamic>>> getCategories() async {
-    final snapshot = await _firestore.collection('categories').get();
-    return snapshot.docs.map((doc) => {
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
-  }
-
-  // User Points
-  Future<Map<String, dynamic>?> getUserPoints(String userId) async {
-    final doc = await _firestore.collection('user_points').doc(userId).get();
-    if (!doc.exists) return null;
-    return {'id': doc.id, ...doc.data()!};
-  }
-
-  // Leaderboard
-  Future<List<Map<String, dynamic>>> getLeaderboard({int limit = 10}) async {
-    final snapshot = await _firestore.collection('leaderboard')
+  // ==================== Leaderboard ====================
+  
+  Future<List<Map<String, dynamic>>> getLeaderboard({int limit = 20}) async {
+    final snapshot = await _firestore
+        .collection('leaderboard')
         .orderBy('totalScore', descending: true)
         .limit(limit)
         .get();
 
-    return snapshot.docs.asMap().entries.map((entry) => {
-      'rank': entry.key + 1,
-      'id': entry.value.id,
-      ...entry.value.data(),
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
     }).toList();
   }
 
-  // Achievements
-  Future<List<Map<String, dynamic>>> getUserAchievements(String userId) async {
-    final snapshot = await _firestore.collection('achievements')
-        .where('userId', isEqualTo: userId)
-        .get();
+  Future<void> updateLeaderboard(String userId, String displayName, int score) async {
+    final docRef = _firestore.collection('leaderboard').doc(userId);
+    final doc = await docRef.get();
 
-    return snapshot.docs.map((doc) => {
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+    if (doc.exists) {
+      final currentData = doc.data() ?? {};
+      await docRef.update({
+        'totalScore': ((currentData['totalScore'] ?? 0) as num) + score,
+        'quizzesCompleted': ((currentData['quizzesCompleted'] ?? 0) as num) + 1,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await docRef.set({
+        'displayName': displayName,
+        'totalScore': score,
+        'quizzesCompleted': 1,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
-  // Admin: Get all users
-  Future<List<Map<String, dynamic>>> adminGetAllUsers({int limit = 50}) async {
-    final snapshot = await _firestore.collection('users')
-        .orderBy('createdAt', descending: true)
+  // ==================== Admin ====================
+  
+  Future<List<Map<String, dynamic>>> adminGetAllUsers({int limit = 100}) async {
+    final snapshot = await _firestore
+        .collection('users')
         .limit(limit)
         .get();
 
-    return snapshot.docs.map((doc) => {
-      'id': doc.id,
-      ...doc.data(),
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
     }).toList();
   }
 
-  // Admin: Get stats
   Future<Map<String, dynamic>> adminGetStats() async {
     final usersCount = await _firestore.collection('users').count().get();
     final questionsCount = await _firestore.collection('questions').count().get();

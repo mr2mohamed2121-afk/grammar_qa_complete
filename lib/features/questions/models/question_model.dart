@@ -1,42 +1,46 @@
-class Question {
-  final String id;
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class QuestionModel {
+  final String? id;
   final String question;
   final List<String> options;
-  final int correctAnswerIndex;
+  final int correctAnswer;
   final String? explanation;
-  final String? category;
-  final DifficultyLevel? difficulty;
+  final String category;
+  final String difficulty;
 
-  Question({
-    required this.id,
+  QuestionModel({
+    this.id,
     required this.question,
     required this.options,
-    required this.correctAnswerIndex,
+    required this.correctAnswer,
     this.explanation,
-    this.category,
-    this.difficulty,
+    required this.category,
+    required this.difficulty,
   });
 
-  factory Question.fromJson(Map<String, dynamic> json) {
-    return Question(
-      id: json['id'] ?? '',
-      question: json['question'] ?? '',
-      options: List<String>.from(json['options'] ?? []),
-      correctAnswerIndex: json['correctAnswerIndex'] ?? 0,
-      explanation: json['explanation'],
-      category: json['category'],
-      difficulty: json['difficulty'] != null 
-          ? DifficultyLevel.values.firstWhere(
-              (e) => e.name == json['difficulty'],
-              orElse: () => DifficultyLevel.easy,
-            )
-          : null,
+  factory QuestionModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    return QuestionModel(
+      id: doc.id,
+      question: data['question'] ?? '',
+      options: List<String>.from(data['options'] ?? []),
+      correctAnswer: (data['correctAnswer'] ?? 0) as int,
+      explanation: data['explanation'],
+      category: data['category'] ?? '',
+      difficulty: data['difficulty'] ?? 'easy',
     );
   }
-}
 
-enum DifficultyLevel {
-  easy,
-  medium,
-  hard,
+  Map<String, dynamic> toMap() {
+    return {
+      'question': question,
+      'options': options,
+      'correctAnswer': correctAnswer,
+      'explanation': explanation,
+      'category': category,
+      'difficulty': difficulty,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+  }
 }

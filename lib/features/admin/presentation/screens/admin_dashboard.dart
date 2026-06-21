@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -20,7 +19,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _users = [];
-  List<Question> _questions = [];
+  List<QuestionModel> _questions = [];
   bool _isLoading = true;
 
   @override

@@ -97,9 +97,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onSignInRequested(SignInRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
+      print('🔐 Signing in: ${event.email}');
       final result = await _signInUseCase(SignInParams(email: event.email, password: event.password));
+       print('✅ Login success: ${result.email}');
       emit(AuthAuthenticated(result));
     } catch (e) {
+      print('❌ Login error: $e');
       emit(AuthError(e.toString()));
     }
   }

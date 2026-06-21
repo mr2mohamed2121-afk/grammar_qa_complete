@@ -20,7 +20,7 @@ await Firebase.initializeApp(
   await Hive.initFlutter();
 
   // Configure dependency injection (get_it + injectable)
-  configureDependencies();
+  setupDependencies();
 
   // Set preferred orientations (portrait only)
   await SystemChrome.setPreferredOrientations([
