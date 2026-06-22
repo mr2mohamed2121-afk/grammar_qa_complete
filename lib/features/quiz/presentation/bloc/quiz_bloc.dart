@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../questions/models/question_model.dart';
 import '../../../../services/firestore_service.dart';
 import '../../models/quiz_result_model.dart';
+import '../../../../injection.dart';
+import '../../../leaderboard/services/leaderboard_service.dart';
 
 // ==================== EVENTS ====================
 abstract class QuizEvent extends Equatable {
@@ -31,6 +33,14 @@ class AnswerQuestion extends QuizEvent {
 
   @override
   List<Object?> get props => [questionIndex, selectedAnswer];
+}
+
+class GoToQuestion extends QuizEvent {
+  final int questionIndex;
+  const GoToQuestion(this.questionIndex);
+
+  @override
+  List<Object?> get props => [questionIndex];
 }
 
 class SubmitQuiz extends QuizEvent {
@@ -127,6 +137,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
         super(QuizInitial()) {
     on<LoadQuestions>(_onLoadQuestions);
     on<AnswerQuestion>(_onAnswerQuestion);
+    on<GoToQuestion>(_onGoToQuestion);
     on<SubmitQuiz>(_onSubmitQuiz);
     on<ResetQuiz>(_onResetQuiz);
   }
@@ -138,8 +149,8 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     emit(QuizLoading());
     try {
       final questions = await _firestoreService.getQuestions(
-        category: event.category,
-        difficulty: event.difficulty,
+       // category: event.category,
+       // difficulty: event.difficulty,
         limit: event.limit ?? 5,
       );
       emit(QuizLoaded(questions: questions, answers: const {}));
@@ -168,6 +179,21 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     }
   }
 
+  void _onGoToQuestion(
+    GoToQuestion event,
+    Emitter<QuizState> emit,
+  ) {
+    if (state is QuizLoaded) {
+      final currentState = state as QuizLoaded;
+      if (event.questionIndex >= 0 && 
+          event.questionIndex < currentState.questions.length) {
+        emit(currentState.copyWith(
+          currentQuestionIndex: event.questionIndex,
+        ));
+      }
+    }
+  }
+
   Future<void> _onSubmitQuiz(
     SubmitQuiz event,
     Emitter<QuizState> emit,
@@ -189,7 +215,6 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
         message = '📚 استمر في التعلم، ستتحسن!';
       }
 
-      // Save result
       try {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
@@ -211,6 +236,13 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
             score,
           );
           await _firestoreService.updateUserScore(user.uid, score);
+
+          try {
+            final leaderboardService = getIt<LeaderboardService>();
+            await leaderboardService.updateUserScore(score, total);
+          } catch (e) {
+            print('Leaderboard update error: $e');
+          }
         }
       } catch (e) {
         print('Error saving quiz result: $e');

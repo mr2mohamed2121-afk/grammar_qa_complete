@@ -21,27 +21,24 @@ class _QuizScreenContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-  title: const Text(
-    'اختبار النحو',
-    style: TextStyle(color: Colors.white),
-  ),
-  centerTitle: true,
-  backgroundColor: const Color(0xFF2E7D32), // أخضر فاتح
-  iconTheme: const IconThemeData(color: Colors.white),
-),
+      appBar: AppBar(
+        title: const Text(
+          'اختبار النحو',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: BlocConsumer<QuizBloc, QuizState>(
         listener: (context, state) {
-            print('📊 QuizState: ${state.runtimeType}');
           if (state is QuizError) {
-            print('❌ Quiz Error: ${state.message}');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
           }
         },
         builder: (context, state) {
-            print('🏗️ Building: ${state.runtimeType}');
           if (state is QuizLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -69,7 +66,6 @@ class _QuizScreenContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Progress
           LinearProgressIndicator(
             value: progress,
             backgroundColor: Colors.grey[300],
@@ -83,7 +79,6 @@ class _QuizScreenContent extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Question
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -102,7 +97,6 @@ class _QuizScreenContent extends StatelessWidget {
           ),
           const SizedBox(height: 32),
 
-          // Options
           Expanded(
             child: ListView.builder(
               itemCount: question.options.length,
@@ -146,46 +140,56 @@ class _QuizScreenContent extends StatelessWidget {
             ),
           ),
 
-          // Navigation
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (!state.isFirstQuestion)
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Previous question logic
+                    context.read<QuizBloc>().add(
+                      GoToQuestion(state.currentQuestionIndex - 1),
+                    );
                   },
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('السابق'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
+                    backgroundColor: Colors.grey[600],
+                    foregroundColor: Colors.white,
                   ),
                 )
               else
-                const SizedBox(),
+                const SizedBox(width: 100),
 
               if (state.isLastQuestion)
                 ElevatedButton.icon(
-                  onPressed: () {
-                    context.read<QuizBloc>().add(const SubmitQuiz());
-                  },
+                  onPressed: state.hasAnsweredCurrent
+                      ? () {
+                          context.read<QuizBloc>().add(const SubmitQuiz());
+                        }
+                      : null,
                   icon: const Icon(Icons.check),
                   label: const Text('إنهاء'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey[400],
                   ),
                 )
               else
                 ElevatedButton.icon(
                   onPressed: state.hasAnsweredCurrent
                       ? () {
-                          // Move to next
+                          context.read<QuizBloc>().add(
+                            GoToQuestion(state.currentQuestionIndex + 1),
+                          );
                         }
                       : null,
                   icon: const Icon(Icons.arrow_forward),
                   label: const Text('التالي'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E3A5F),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey[400],
                   ),
                 ),
             ],
@@ -214,6 +218,7 @@ class _QuizScreenContent extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                color: Colors.black87, // ✅ أوضح
               ),
             ),
             const SizedBox(height: 16),
@@ -233,22 +238,43 @@ class _QuizScreenContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
+            // ✅ الزر المعدل - لون أبيض واضح
             ElevatedButton.icon(
               onPressed: () {
                 context.read<QuizBloc>().add(const ResetQuiz());
                 context.read<QuizBloc>().add(const LoadQuestions(limit: 5));
               },
-              icon: const Icon(Icons.refresh),
-              label: const Text('اختبار جديد'),
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              label: const Text(
+                'اختبار جديد',
+                style: TextStyle(
+                  color: Colors.white, // ✅ أبيض واضح
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A5F),
+                backgroundColor: const Color(0xFF2E7D32), // ✅ أخضر واضح
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
               ),
             ),
             const SizedBox(height: 12),
+            // ✅ زر العودة معدل
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('العودة للرئيسية'),
+              child: const Text(
+                'العودة للرئيسية',
+                style: TextStyle(
+                  color: Color(0xFF1E3A5F), // ✅ أزرق داكن واضح
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),

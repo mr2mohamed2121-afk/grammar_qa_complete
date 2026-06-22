@@ -5,6 +5,8 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/admin/presentation/screens/admin_dashboard.dart';
+import 'features/leaderboard/presentation/screens/leaderboard_screen.dart';
+import 'features/leaderboard/presentation/bloc/leaderboard_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'splash_screen.dart';
 import 'injection.dart';
@@ -37,6 +39,19 @@ class GrammarQAApp extends StatelessWidget {
         ],
         locale: const Locale('ar', 'EG'),
         home: const SplashScreenWrapper(),
+        onGenerateRoute: (settings) {
+          switch (settings.name) {
+            case '/leaderboard':
+              return MaterialPageRoute(
+                builder: (context) => BlocProvider(
+                  create: (context) => getIt<LeaderboardBloc>()..add(LoadLeaderboard()),
+                  child: const LeaderboardScreen(),
+                ),
+              );
+            default:
+              return null;
+          }
+        },
       ),
     );
   }
@@ -73,7 +88,7 @@ class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
         }
         if (state is AuthAuthenticated) {
           if (state.user.isAdmin) {
-            return const AdminDashboard();
+            return AdminDashboard();
           }
           return const HomeScreen();
         }
