@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- === NEW: Added permissions for new features === -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access for live video lessons</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for live audio lessons</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID for secure authentication</string>
+
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -51,7 +59,7 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
+	<key>UIMainStoryboardName</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>

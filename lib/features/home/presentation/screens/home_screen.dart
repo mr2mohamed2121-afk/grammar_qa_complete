@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../levels/domain/entities/quiz_entity.dart';
 import '../../../quiz/presentation/screens/quiz_screen.dart';
+import '../../../levels/presentation/screens/level_screen.dart';  // ✅ إضافة
 import '../../../admin/presentation/screens/add_questions_screen.dart';
 import '../../../leaderboard/presentation/screens/leaderboard_screen.dart';
 import '../../../live_sessions/presentation/screens/live_sessions_screen.dart';
 import '../../../ai_tutor/presentation/screens/ai_tutor_screen.dart';
 import '../../../leaderboard/presentation/bloc/leaderboard_bloc.dart';
+import '../../../../core/utils/app_colors.dart';
 import '../../../../injection.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/screens/account_settings_dialog.dart';
@@ -50,7 +53,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // زر اختبر نفسك
+              // ✅ تعديل: زر "اختبر نفسك" يفتح LevelScreen
               _buildGradientButton(
                 context: context,
                 title: 'اختبر نفسك',
@@ -58,7 +61,9 @@ class HomeScreen extends StatelessWidget {
                 colors: [const Color(0xFF2E7D32), const Color(0xFF1B5E20)],
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const QuizScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const LevelScreen(),  // ✅ تعديل
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -107,7 +112,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // ✅ زر أستاذ النحو الذكي - جوه Column دلوقتي
+              // زر أستاذ النحو الذكي
               _buildGradientButton(
                 context: context,
                 title: 'أستاذ النحو الذكي',
@@ -180,6 +185,7 @@ class HomeScreen extends StatelessWidget {
             
             const Divider(color: Colors.white24),
             
+            // ✅ تعديل: تسجيل الخروج
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -188,6 +194,7 @@ class HomeScreen extends StatelessWidget {
               ),
               onTap: () {
                 Navigator.pop(context);
+                // ✅ أضف context.read<AuthBloc>()
                 context.read<AuthBloc>().add(SignOutRequested());
               },
             ),

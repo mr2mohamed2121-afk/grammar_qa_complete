@@ -1,282 +1,427 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../injection.dart';
-import '../bloc/quiz_bloc.dart';
+import '../../../levels/domain/entities/quiz_entity.dart';        // ✅ تعديل
+import '../../../levels/domain/entities/question_entity.dart';    // ✅ تعديل
+import '../../../../core/utils/app_colors.dart';
 
-class QuizScreen extends StatelessWidget {
-  const QuizScreen({super.key});
+class QuizScreen extends StatefulWidget {
+  final QuizEntity quiz;
+  final Color levelColor;
+
+  const QuizScreen({
+    Key? key,
+    required this.quiz,
+    required this.levelColor,
+  }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<QuizBloc>()..add(const LoadQuestions(limit: 5)),
-      child: const _QuizScreenContent(),
-    );
-  }
+  State<QuizScreen> createState() => _QuizScreenState();
 }
 
-class _QuizScreenContent extends StatelessWidget {
-  const _QuizScreenContent();
+class _QuizScreenState extends State<QuizScreen> {
+  int _currentQuestionIndex = 0;
+  int? _selectedAnswer;
+  bool _showExplanation = false;
+  int _correctAnswers = 0;
+  bool _quizCompleted = false;
 
   @override
   Widget build(BuildContext context) {
+    if (_quizCompleted) {
+      return _buildResultScreen();
+    }
+
+    final question = widget.quiz.questions[_currentQuestionIndex];
+    final progress = (_currentQuestionIndex + 1) / widget.quiz.questions.length;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'اختبار النحو',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF2E7D32),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: BlocConsumer<QuizBloc, QuizState>(
-        listener: (context, state) {
-          if (state is QuizError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is QuizLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is QuizLoaded) {
-            return _buildQuizContent(context, state);
-          }
-
-          if (state is QuizCompleted) {
-            return _buildResults(context, state);
-          }
-
-          return const Center(child: Text('اضغط لبدء الاختبار'));
-        },
-      ),
-    );
-  }
-
-  Widget _buildQuizContent(BuildContext context, QuizLoaded state) {
-    final question = state.questions[state.currentQuestionIndex];
-    final progress = (state.currentQuestionIndex + 1) / state.questions.length;
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.grey[300],
-            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'السؤال ${state.currentQuestionIndex + 1} من ${state.questions.length}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-          const SizedBox(height: 24),
-
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E3A5F),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              question.question,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+        title: Text(widget.quiz.title),
+        backgroundColor: widget.levelColor,
+        actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                '${_currentQuestionIndex + 1} / ${widget.quiz.questions.length}',
+                style: const TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
           ),
-          const SizedBox(height: 32),
-
+        ],
+      ),
+      body: Column(
+        children: [
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.grey[200],
+            valueColor: AlwaysStoppedAnimation<Color>(widget.levelColor),
+            minHeight: 8,
+          ),
           Expanded(
-            child: ListView.builder(
-              itemCount: question.options.length,
-              itemBuilder: (context, index) {
-                final isSelected = state.answers[state.currentQuestionIndex] == index;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.read<QuizBloc>().add(
-                        AnswerQuestion(
-                          questionIndex: state.currentQuestionIndex,
-                          selectedAnswer: index,
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isSelected
-                          ? const Color(0xFF2E7D32)
-                          : Colors.white,
-                      foregroundColor: isSelected
-                          ? Colors.white
-                          : const Color(0xFF1E3A5F),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: isSelected
-                              ? const Color(0xFF2E7D32)
-                              : Colors.grey[300]!,
-                        ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildQuestionCard(question),
+                  const SizedBox(height: 24),
+                  ...List.generate(
+                    question.options.length,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: _buildOptionCard(
+                        index,
+                        question.options[index],
+                        question.correct,
+                        _showExplanation,
                       ),
                     ),
-                    child: Text(
-                      question.options[index],
-                      style: const TextStyle(fontSize: 18),
-                    ),
                   ),
-                );
-              },
+                  if (_showExplanation)
+                    _buildExplanationCard(question),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ),
+          _buildBottomButton(question),
+        ],
+      ),
+    );
+  }
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (!state.isFirstQuestion)
-                ElevatedButton.icon(
-                  onPressed: () {
-                    context.read<QuizBloc>().add(
-                      GoToQuestion(state.currentQuestionIndex - 1),
-                    );
-                  },
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('السابق'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[600],
-                    foregroundColor: Colors.white,
+  Widget _buildQuestionCard(QuestionEntity question) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: widget.levelColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'سؤال ${_currentQuestionIndex + 1}',
+                style: TextStyle(
+                  color: widget.levelColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              question.question,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                )
-              else
-                const SizedBox(width: 100),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-              if (state.isLastQuestion)
-                ElevatedButton.icon(
-                  onPressed: state.hasAnsweredCurrent
-                      ? () {
-                          context.read<QuizBloc>().add(const SubmitQuiz());
-                        }
-                      : null,
-                  icon: const Icon(Icons.check),
-                  label: const Text('إنهاء'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey[400],
-                  ),
-                )
-              else
-                ElevatedButton.icon(
-                  onPressed: state.hasAnsweredCurrent
-                      ? () {
-                          context.read<QuizBloc>().add(
-                            GoToQuestion(state.currentQuestionIndex + 1),
-                          );
-                        }
-                      : null,
-                  icon: const Icon(Icons.arrow_forward),
-                  label: const Text('التالي'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E3A5F),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey[400],
+  Widget _buildOptionCard(
+    int index,
+    String text,
+    int correct,
+    bool showResult,
+  ) {
+    Color? borderColor;
+    Color? backgroundColor;
+
+    if (showResult) {
+      if (index == correct) {
+        borderColor = Colors.green;
+        backgroundColor = Colors.green[50];
+      } else if (index == _selectedAnswer && index != correct) {
+        borderColor = Colors.red;
+        backgroundColor = Colors.red[50];
+      }
+    } else if (_selectedAnswer == index) {
+      borderColor = widget.levelColor;
+      backgroundColor = widget.levelColor.withOpacity(0.1);
+    }
+
+    return GestureDetector(
+      onTap: showResult ? null : () => setState(() => _selectedAnswer = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: backgroundColor ?? Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: borderColor ?? Colors.grey[300]!,
+            width: borderColor != null ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: _selectedAnswer == index
+                    ? widget.levelColor
+                    : Colors.grey[200],
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  String.fromCharCode(65 + index),
+                  style: TextStyle(
+                    color: _selectedAnswer == index
+                        ? Colors.white
+                        : Colors.grey[600],
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: showResult && index == correct
+                      ? Colors.green[700]
+                      : Colors.grey[800],
+                  fontWeight: showResult && index == correct
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+            ),
+            if (showResult && index == correct)
+              const Icon(Icons.check_circle, color: Colors.green)
+            else if (showResult && index == _selectedAnswer && index != correct)
+              const Icon(Icons.cancel, color: Colors.red),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExplanationCard(QuestionEntity question) {
+    final isCorrect = _selectedAnswer == question.correct;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isCorrect ? Colors.green[50] : Colors.red[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isCorrect ? Colors.green : Colors.red,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isCorrect ? Icons.check_circle : Icons.cancel,
+                color: isCorrect ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isCorrect ? 'إجابة صحيحة!' : 'إجابة خاطئة',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isCorrect ? Colors.green[700] : Colors.red[700],
+                ),
+              ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            question.explanation,
+            style: TextStyle(
+              color: Colors.grey[800],
+              height: 1.5,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildResults(BuildContext context, QuizCompleted state) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              state.percentage >= 70 ? Icons.emoji_events : Icons.school,
-              size: 80,
-              color: state.percentage >= 70 ? Colors.amber : const Color(0xFF1E3A5F),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              state.message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87, // ✅ أوضح
+  Widget _buildBottomButton(QuestionEntity question) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _selectedAnswer == null
+                ? null
+                : _showExplanation
+                    ? _nextQuestion
+                    : _checkAnswer,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: widget.levelColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              '${state.score} / ${state.totalQuestions}',
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2E7D32),
-              ),
+            child: Text(
+              _showExplanation
+                  ? _currentQuestionIndex < widget.quiz.questions.length - 1
+                      ? 'السؤال التالي →'
+                      : 'عرض النتائج 🎯'
+                  : 'تحقق من الإجابة',
+              style: const TextStyle(fontSize: 16),
             ),
-            Text(
-              '${state.percentage.toStringAsFixed(1)}%',
-              style: const TextStyle(
-                fontSize: 24,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 32),
-            // ✅ الزر المعدل - لون أبيض واضح
-            ElevatedButton.icon(
-              onPressed: () {
-                context.read<QuizBloc>().add(const ResetQuiz());
-                context.read<QuizBloc>().add(const LoadQuestions(limit: 5));
-              },
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text(
-                'اختبار جديد',
-                style: TextStyle(
-                  color: Colors.white, // ✅ أبيض واضح
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _checkAnswer() {
+    final question = widget.quiz.questions[_currentQuestionIndex];
+    setState(() {
+      _showExplanation = true;
+      if (_selectedAnswer == question.correct) {
+        _correctAnswers++;
+      }
+    });
+  }
+
+  void _nextQuestion() {
+    if (_currentQuestionIndex < widget.quiz.questions.length - 1) {
+      setState(() {
+        _currentQuestionIndex++;
+        _selectedAnswer = null;
+        _showExplanation = false;
+      });
+    } else {
+      setState(() => _quizCompleted = true);
+    }
+  }
+
+  Widget _buildResultScreen() {
+    final percentage = (_correctAnswers / widget.quiz.questions.length * 100).round();
+    final isPassed = percentage >= 60;
+    final points = isPassed
+        ? widget.quiz.questions.length * 10
+        : widget.quiz.questions.length * 5;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: isPassed ? Colors.green[50] : Colors.orange[50],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isPassed ? Icons.emoji_events : Icons.school,
+                  size: 64,
+                  color: isPassed ? Colors.amber : Colors.orange,
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E7D32), // ✅ أخضر واضح
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
+              const SizedBox(height: 24),
+              Text(
+                '$percentage%',
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isPassed ? Colors.green : Colors.orange,
+                    ),
               ),
-            ),
-            const SizedBox(height: 12),
-            // ✅ زر العودة معدل
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'العودة للرئيسية',
-                style: TextStyle(
-                  color: Color(0xFF1E3A5F), // ✅ أزرق داكن واضح
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              const SizedBox(height: 8),
+              Text(
+                '$_correctAnswers / ${widget.quiz.questions.length} إجابات صحيحة',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              Text(
+                isPassed
+                    ? '🎉 ممتاز! لقد نجحت في الاختبار!'
+                    : '💪 حاول مرة أخرى! أنت قادر على النجاح!',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isPassed
+                    ? 'لقد حصلت على $points نقطة إضافية!'
+                    : 'حصلت على $points نقطة. حاول مرة أخرى للحصول على المزيد!',
+                style: TextStyle(color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              if (isPassed)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/certificate');
+                  },
+                  icon: const Icon(Icons.card_membership),
+                  label: const Text('عرض الشهادة 🏆'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.levelColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                )
+              else
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _currentQuestionIndex = 0;
+                      _selectedAnswer = null;
+                      _showExplanation = false;
+                      _correctAnswers = 0;
+                      _quizCompleted = false;
+                    });
+                  },
+                  icon: const Icon(Icons.replay),
+                  label: const Text('إعادة الاختبار'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('العودة للمستويات'),
+              ),
+            ],
+          ),
         ),
       ),
     );

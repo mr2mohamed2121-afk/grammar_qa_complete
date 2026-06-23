@@ -155,4 +155,15 @@ class FirestoreService {
       'totalQuizzes': resultsCount.count,
     };
   }
+
+  // ==================== Levels ====================
+  
+  Future<List<Map<String, dynamic>>> getLevels() async {
+    final snapshot = await _firestore.collection('levels').get();
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
 }

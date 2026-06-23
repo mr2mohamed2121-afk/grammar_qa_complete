@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users - only owner can read/write
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Levels - public read, admin write
+    match /levels/{levelId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Progress - only owner
+    match /users/{userId}/progress/{progressId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Certificates - only owner
+    match /users/{userId}/certificates/{certId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Subscriptions - only owner
+    match /users/{userId}/subscriptions/{subId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Live lessons - public read, admin write
+    match /live_lessons/{lessonId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Achievements - public read, admin write
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Analytics - admin only
+    match /analytics/{eventId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

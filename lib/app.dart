@@ -3,13 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/auth/presentation/screens/forgot_password_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/admin/presentation/screens/admin_dashboard.dart';
 import 'features/leaderboard/presentation/screens/leaderboard_screen.dart';
 import 'features/leaderboard/presentation/bloc/leaderboard_bloc.dart';
+import 'features/levels/presentation/screens/level_screen.dart';
+import 'features/levels/presentation/bloc/levels_bloc.dart';
+import 'services/firestore_service.dart';
 import 'core/theme/app_theme.dart';
 import 'splash_screen.dart';
-import 'injection.dart';
+import 'injection.dart';  // ✅ بس ده
 
 class GrammarQAApp extends StatelessWidget {
   const GrammarQAApp({super.key});
@@ -20,6 +25,11 @@ class GrammarQAApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(
           create: (context) => getIt<AuthBloc>()..add(AppStarted()),
+        ),
+        BlocProvider<LevelsBloc>(
+          create: (context) => LevelsBloc(
+            firestoreService: getIt<FirestoreService>(),
+          )..add(const LoadLevels(userPoints: 0)),
         ),
       ],
       child: MaterialApp(
@@ -39,6 +49,13 @@ class GrammarQAApp extends StatelessWidget {
         ],
         locale: const Locale('ar', 'EG'),
         home: const SplashScreenWrapper(),
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/forgot-password': (context) => const ForgotPasswordScreen(),
+          '/home': (context) => const HomeScreen(),
+          '/levels': (context) => const LevelScreen(),
+        },
         onGenerateRoute: (settings) {
           switch (settings.name) {
             case '/leaderboard':
