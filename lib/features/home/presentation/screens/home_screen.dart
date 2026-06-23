@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../levels/domain/entities/quiz_entity.dart';
-import '../../../quiz/presentation/screens/quiz_screen.dart';
-import '../../../levels/presentation/screens/level_screen.dart';  // ✅ إضافة
+import '../../../levels/presentation/screens/level_screen.dart';
 import '../../../admin/presentation/screens/add_questions_screen.dart';
 import '../../../leaderboard/presentation/screens/leaderboard_screen.dart';
+import '../../../leaderboard/presentation/bloc/leaderboard_bloc.dart';
 import '../../../live_sessions/presentation/screens/live_sessions_screen.dart';
 import '../../../ai_tutor/presentation/screens/ai_tutor_screen.dart';
-import '../../../leaderboard/presentation/bloc/leaderboard_bloc.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../injection.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -53,7 +51,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // ✅ تعديل: زر "اختبر نفسك" يفتح LevelScreen
+              // ✅ زر "اختبر نفسك" → يفتح LevelScreen
               _buildGradientButton(
                 context: context,
                 title: 'اختبر نفسك',
@@ -62,13 +60,12 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const LevelScreen(),  // ✅ تعديل
+                    builder: (context) => const LevelScreen(),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // زر إضافة أسئلة
               _buildGradientButton(
                 context: context,
                 title: 'إضافة أسئلة',
@@ -81,7 +78,6 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // زر لوحة المتصدرين
               _buildGradientButton(
                 context: context,
                 title: 'لوحة المتصدرين',
@@ -91,7 +87,7 @@ class HomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => BlocProvider(
-                      create: (context) => getIt<LeaderboardBloc>()..add(LoadLeaderboard()),
+                      create: (_) => getIt<LeaderboardBloc>()..add(LoadLeaderboard()),
                       child: const LeaderboardScreen(),
                     ),
                   ),
@@ -99,7 +95,6 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // زر الجلسات المباشرة
               _buildGradientButton(
                 context: context,
                 title: 'الجلسات المباشرة',
@@ -112,7 +107,6 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // زر أستاذ النحو الذكي
               _buildGradientButton(
                 context: context,
                 title: 'أستاذ النحو الذكي',
@@ -152,7 +146,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             ListTile(
               leading: const Icon(Icons.person, color: Colors.white),
               title: const Text(
@@ -167,7 +161,7 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            
+
             ListTile(
               leading: const Icon(Icons.privacy_tip, color: Colors.white),
               title: const Text(
@@ -182,10 +176,10 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            
+
             const Divider(color: Colors.white24),
-            
-            // ✅ تعديل: تسجيل الخروج
+
+            // ✅✅✅ الحل الصحيح!
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -194,7 +188,7 @@ class HomeScreen extends StatelessWidget {
               ),
               onTap: () {
                 Navigator.pop(context);
-                // ✅ أضف context.read<AuthBloc>()
+                // ✅ استخدم context.read<AuthBloc>() مع النوع
                 context.read<AuthBloc>().add(SignOutRequested());
               },
             ),

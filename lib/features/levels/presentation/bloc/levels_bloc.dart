@@ -4,7 +4,7 @@ import '../../domain/entities/level_entity.dart';
 import '../../domain/entities/quiz_entity.dart';
 import '../../../../services/firestore_service.dart';
 
-// Events
+// ==================== Events ====================
 abstract class LevelsEvent extends Equatable {
   const LevelsEvent();
   @override
@@ -26,7 +26,7 @@ class UpdateLevelProgress extends LevelsEvent {
   List<Object?> get props => [levelId, progress];
 }
 
-// States
+// ==================== States ====================
 abstract class LevelsState extends Equatable {
   const LevelsState();
   @override
@@ -34,13 +34,16 @@ abstract class LevelsState extends Equatable {
 }
 
 class LevelsInitial extends LevelsState {}
+
 class LevelsLoading extends LevelsState {}
+
 class LevelsLoaded extends LevelsState {
   final List<LevelEntity> levels;
   const LevelsLoaded({required this.levels});
   @override
   List<Object?> get props => [levels];
 }
+
 class LevelsError extends LevelsState {
   final String message;
   const LevelsError({required this.message});
@@ -48,7 +51,7 @@ class LevelsError extends LevelsState {
   List<Object?> get props => [message];
 }
 
-// BLoC
+// ==================== BLoC ====================
 class LevelsBloc extends Bloc<LevelsEvent, LevelsState> {
   final FirestoreService _firestoreService;
 
@@ -61,19 +64,28 @@ class LevelsBloc extends Bloc<LevelsEvent, LevelsState> {
 
   Future<void> _onLoadLevels(LoadLevels event, Emitter<LevelsState> emit) async {
     emit(LevelsLoading());
+    
     try {
       final levelsData = await _firestoreService.getLevels();
-      
-      // ✅ إضافة: لو مفيش بيانات، ارجع قائمة فاضية
+
+      // ✅ Check: لو مفيش بيانات في Firestore
       if (levelsData.isEmpty) {
-        emit(LevelsLoaded(levels: []));
+        emit(const LevelsLoaded(levels: []));
         return;
       }
-      
-      final levels = levelsData.map((data) {
+
+      // ✅ معالجة ID صحيحة
+      final levels = levelsData.asMap().entries.map((entry) {
+        final index = entry.key;
+        final data = entry.value;
+        
         final isUnlocked = event.userPoints >= (data['required_points'] as int? ?? 0);
+        
         return LevelEntity(
-          id: data['id'] is int ? data['id'] as int : int.tryParse(data['id'].toString()) ?? 0,
+          // ✅ الحل: لو ID string (زي "level1")، استخدم index + 1
+          id: data['id'] is int 
+              ? data['id'] as int 
+              : int.tryParse(data['id'].toString()) ?? (index + 1),
           title: data['title'] as String? ?? 'بدون عنوان',
           description: data['description'] as String? ?? '',
           requiredPoints: data['required_points'] as int? ?? 0,
@@ -85,9 +97,11 @@ class LevelsBloc extends Bloc<LevelsEvent, LevelsState> {
           progress: 0.0,
         );
       }).toList();
+      
       emit(LevelsLoaded(levels: levels));
+      
     } catch (e) {
-      emit(LevelsError(message: 'Failed to load levels: $e'));
+      emit(LevelsError(message: 'فشل في تحميل المستويات: $e'));
     }
   }
 

@@ -11,10 +11,9 @@ import 'features/leaderboard/presentation/screens/leaderboard_screen.dart';
 import 'features/leaderboard/presentation/bloc/leaderboard_bloc.dart';
 import 'features/levels/presentation/screens/level_screen.dart';
 import 'features/levels/presentation/bloc/levels_bloc.dart';
-import 'services/firestore_service.dart';
 import 'core/theme/app_theme.dart';
 import 'splash_screen.dart';
-import 'injection.dart';  // ✅ بس ده
+import 'injection.dart';
 
 class GrammarQAApp extends StatelessWidget {
   const GrammarQAApp({super.key});
@@ -23,13 +22,13 @@ class GrammarQAApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        // ✅ AuthBloc مع النوع الصحيح
         BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>()..add(AppStarted()),
+          create: (_) => getIt<AuthBloc>()..add(AppStarted()),
         ),
+        // ✅ LevelsBloc مع النوع الصحيح
         BlocProvider<LevelsBloc>(
-          create: (context) => LevelsBloc(
-            firestoreService: getIt<FirestoreService>(),
-          )..add(const LoadLevels(userPoints: 0)),
+          create: (_) => getIt<LevelsBloc>()..add(const LoadLevels(userPoints: 0)),
         ),
       ],
       child: MaterialApp(
@@ -61,7 +60,7 @@ class GrammarQAApp extends StatelessWidget {
             case '/leaderboard':
               return MaterialPageRoute(
                 builder: (context) => BlocProvider(
-                  create: (context) => getIt<LeaderboardBloc>()..add(LoadLeaderboard()),
+                  create: (_) => getIt<LeaderboardBloc>()..add(LoadLeaderboard()),
                   child: const LeaderboardScreen(),
                 ),
               );
@@ -96,6 +95,7 @@ class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
       );
     }
 
+    // ✅ BlocBuilder<AuthBloc, AuthState> مع النوع
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is AuthLoading) {
@@ -105,11 +105,17 @@ class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
         }
         if (state is AuthAuthenticated) {
           if (state.user.isAdmin) {
-            return AdminDashboard();
+            return const AdminDashboard(); // ✅ const
           }
           return const HomeScreen();
         }
-        return const LoginScreen();
+        if (state is AuthUnauthenticated) {
+          return const LoginScreen();
+        }
+        // ✅ initial state - loading
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
       },
     );
   }
