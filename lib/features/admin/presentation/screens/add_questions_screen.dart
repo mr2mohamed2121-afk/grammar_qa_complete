@@ -20,8 +20,12 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
   ];
   int _correctAnswerIndex = 0;
   String _category = 'عام';
-  String _difficulty = 'easy';
+  String _difficulty = 'سهل'; // ✅ تغيير: خليتها عربي
   bool _isLoading = false;
+
+  // ✅ القوائم العربية
+  final List<String> _categories = ['عام', 'نحو', 'صرف', 'بلاغة', 'إملاء'];
+  final List<String> _difficulties = ['سهل', 'متوسط', 'صعب']; // ✅ عربي بالكامل
 
   @override
   void dispose() {
@@ -39,14 +43,14 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
 
     try {
       final options = _optionControllers.map((c) => c.text.trim()).toList();
-      
+
       final question = QuestionModel(
         question: _questionController.text.trim(),
         options: options,
         correctAnswer: _correctAnswerIndex,
         explanation: null,
         category: _category,
-        difficulty: _difficulty,
+        difficulty: _difficulty, // ✅ هنبعت عربي للـ Firestore
       );
 
       await FirebaseFirestore.instance
@@ -91,6 +95,8 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
     }
     setState(() {
       _correctAnswerIndex = 0;
+      _category = 'عام';
+      _difficulty = 'سهل'; // ✅ تغيير: رجعنا للعربي
     });
   }
 
@@ -106,7 +112,6 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
         backgroundColor: const Color(0xFF2E7D32),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      // ✅ خلفية داكنة للشاشة كلها
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -124,20 +129,19 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ✅ عنوان أبيض واضح
                     const Text(
                       'أضف سؤال جديد',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white, // ✅ أبيض
+                        color: Colors.white,
                         fontFamily: 'Cairo',
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    // ✅ السؤال - نص أبيض + خلفية أزرق
+                    // ✅ السؤال
                     _buildTextField(
                       controller: _questionController,
                       label: 'السؤال',
@@ -152,13 +156,13 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ✅ الخيارات - عنوان أبيض
+                    // ✅ الخيارات
                     const Text(
                       'الخيارات:',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white, // ✅ أبيض
+                        color: Colors.white,
                         fontFamily: 'Cairo',
                       ),
                     ),
@@ -192,68 +196,76 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
                       const SizedBox(height: 8),
                     ],
 
-                    // ✅ التصنيف
+                    // ✅ التصنيف - Dropdown صحيح
                     const Text(
                       'التصنيف:',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white, // ✅ أبيض
+                        color: Colors.white,
                         fontFamily: 'Cairo',
                       ),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: _category,
-                      dropdownColor: const Color(0xFF16213E), // ✅ خلفية داكنة
+                      dropdownColor: const Color(0xFF16213E),
                       style: const TextStyle(
-                        color: Colors.white, // ✅ أبيض
+                        color: Colors.white,
                         fontFamily: 'Cairo',
                       ),
                       decoration: _buildInputDecoration('اختر التصنيف'),
-                      items: const [
-                        DropdownMenuItem(value: 'عام', child: Text('عام', style: TextStyle(color: Colors.white))),
-                        DropdownMenuItem(value: 'نحو', child: Text('نحو', style: TextStyle(color: Colors.white))),
-                        DropdownMenuItem(value: 'صرف', child: Text('صرف', style: TextStyle(color: Colors.white))),
-                        DropdownMenuItem(value: 'بلاغة', child: Text('بلاغة', style: TextStyle(color: Colors.white))),
-                      ],
-                      onChanged: (value) {
+                      items: _categories.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Text(
+                            category,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? value) {
                         setState(() => _category = value!);
                       },
                     ),
                     const SizedBox(height: 16),
 
-                    // ✅ الصعوبة
+                    // ✅ الصعوبة - Dropdown صحيح بالعربي
                     const Text(
                       'الصعوبة:',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white, // ✅ أبيض
+                        color: Colors.white,
                         fontFamily: 'Cairo',
                       ),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: _difficulty,
-                      dropdownColor: const Color(0xFF16213E), // ✅ خلفية داكنة
+                      dropdownColor: const Color(0xFF16213E),
                       style: const TextStyle(
-                        color: Colors.white, // ✅ أبيض
+                        color: Colors.white,
                         fontFamily: 'Cairo',
                       ),
                       decoration: _buildInputDecoration('اختر الصعوبة'),
-                      items: const [
-                        DropdownMenuItem(value: 'easy', child: Text('سهل', style: TextStyle(color: Colors.white))),
-                        DropdownMenuItem(value: 'medium', child: Text('متوسط', style: TextStyle(color: Colors.white))),
-                        DropdownMenuItem(value: 'hard', child: Text('صعب', style: TextStyle(color: Colors.white))),
-                      ],
-                      onChanged: (value) {
+                      // ✅ استخدمنا القائمة العربية
+                      items: _difficulties.map((String difficulty) {
+                        return DropdownMenuItem<String>(
+                          value: difficulty, // ✅ القيمة = النص العربي
+                          child: Text(
+                            difficulty,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? value) {
                         setState(() => _difficulty = value!);
                       },
                     ),
                     const SizedBox(height: 24),
 
-                    // ✅ زر الإضافة - أخضر واضح + نص أبيض
+                    // ✅ زر الإضافة
                     ElevatedButton.icon(
                       onPressed: _isLoading ? null : _addQuestion,
                       icon: _isLoading
@@ -271,7 +283,7 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white, // ✅ أبيض
+                          color: Colors.white,
                           fontFamily: 'Cairo',
                         ),
                       ),
@@ -294,7 +306,6 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
     );
   }
 
-  // ✅ TextField موحد - نص أبيض + خلفية أزرق داكن
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -307,7 +318,7 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
       maxLines: maxLines,
       validator: validator,
       style: const TextStyle(
-        color: Colors.white, // ✅ أبيض
+        color: Colors.white,
         fontFamily: 'Cairo',
         fontSize: 16,
       ),
@@ -315,21 +326,20 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
     );
   }
 
-  // ✅ InputDecoration موحد - خلفية أزرق داكن + نص أبيض
   InputDecoration _buildInputDecoration(String label, {String? hint}) {
     return InputDecoration(
       labelText: label,
       hintText: hint,
       labelStyle: const TextStyle(
-        color: Colors.white70, // ✅ أبيض فاتح
+        color: Colors.white70,
         fontFamily: 'Cairo',
       ),
       hintStyle: const TextStyle(
-        color: Colors.white38, // ✅ أبيض شفاف
+        color: Colors.white38,
         fontFamily: 'Cairo',
       ),
       filled: true,
-      fillColor: const Color(0xFF0F3460), // ✅ خلفية أزرق داكن
+      fillColor: const Color(0xFF0F3460),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFF2E7D32)),
