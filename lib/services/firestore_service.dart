@@ -7,7 +7,7 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ==================== Users ====================
-  
+
   Future<void> createUser(UserModel user) async {
     await _firestore.collection('users').doc(user.id).set(user.toJson());
   }
@@ -38,7 +38,7 @@ class FirestoreService {
   }
 
   // ==================== Questions ====================
-  
+
   Future<List<QuestionModel>> getQuestions({
     String? category,
     String? difficulty,
@@ -46,6 +46,7 @@ class FirestoreService {
   }) async {
     Query<Map<String, dynamic>> query = _firestore.collection('questions');
 
+    // ✅ نبحث بالقيمة اللي جاية (عربي أو إنجليزي)
     if (category != null && category.isNotEmpty) {
       query = query.where('category', isEqualTo: category);
     }
@@ -62,6 +63,30 @@ class FirestoreService {
         .toList();
   }
 
+  // ✅ دالة جديدة: جيب كل التصنيفات المتاحة (عربي)
+  Future<List<String>> getCategories() async {
+    final snapshot = await _firestore.collection('questions').get();
+    final categories = snapshot.docs
+        .map((doc) => doc.data()['category'] as String?)
+        .where((c) => c != null)
+        .toSet()
+        .cast<String>()
+        .toList();
+    return categories;
+  }
+
+  // ✅ دالة جديدة: جيب كل مستويات الصعوبة المتاحة (عربي)
+  Future<List<String>> getDifficulties() async {
+    final snapshot = await _firestore.collection('questions').get();
+    final difficulties = snapshot.docs
+        .map((doc) => doc.data()['difficulty'] as String?)
+        .where((d) => d != null)
+        .toSet()
+        .cast<String>()
+        .toList();
+    return difficulties;
+  }
+
   Future<void> addQuestion(QuestionModel question) async {
     await _firestore.collection('questions').add(question.toMap());
   }
@@ -75,7 +100,7 @@ class FirestoreService {
   }
 
   // ==================== Quiz Results ====================
-  
+
   Future<void> saveQuizResult(QuizResultModel result) async {
     await _firestore.collection('quiz_results').add(result.toMap());
   }
@@ -93,7 +118,7 @@ class FirestoreService {
   }
 
   // ==================== Leaderboard ====================
-  
+
   Future<List<Map<String, dynamic>>> getLeaderboard({int limit = 20}) async {
     final snapshot = await _firestore
         .collection('leaderboard')
@@ -130,7 +155,7 @@ class FirestoreService {
   }
 
   // ==================== Admin ====================
-  
+
   Future<List<Map<String, dynamic>>> adminGetAllUsers({int limit = 100}) async {
     final snapshot = await _firestore
         .collection('users')
@@ -157,7 +182,7 @@ class FirestoreService {
   }
 
   // ==================== Levels ====================
-  
+
   Future<List<Map<String, dynamic>>> getLevels() async {
     final snapshot = await _firestore.collection('levels').get();
     return snapshot.docs.map((doc) {

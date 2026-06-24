@@ -250,7 +250,7 @@ class _AddQuestionsScreenState extends State<AddQuestionsScreen> {
                       ),
                       decoration: _buildInputDecoration('اختر الصعوبة'),
                       // ✅ استخدمنا القائمة العربية
-                      items: _difficulties.map((String difficulty) {
+                      items: ['easy', 'medium', 'hard'].map((String difficulty) {
                         return DropdownMenuItem<String>(
                           value: difficulty, // ✅ القيمة = النص العربي
                           child: Text(
