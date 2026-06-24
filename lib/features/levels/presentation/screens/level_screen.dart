@@ -11,7 +11,7 @@ class LevelScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<LevelsBloc, LevelsState>(
+      body: BlocBuilder<LevelsBloc, LevelsState>(  // ✅ مع النوع
         builder: (context, state) {
           if (state is LevelsLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -31,6 +31,7 @@ class LevelScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
+                      // ✅ استخدم context.read<LevelsBloc>()
                       context.read<LevelsBloc>().add(const LoadLevels(userPoints: 0));
                     },
                     child: const Text('إعادة المحاولة'),
@@ -70,7 +71,7 @@ class LevelScreen extends StatelessWidget {
         ),
       );
     }
-    
+
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
@@ -269,7 +270,7 @@ class LevelScreen extends StatelessWidget {
                                     value: level.progress,
                                     backgroundColor: Colors.grey[200],
                                     valueColor:
-                                        AlwaysStoppedAnimation<Color>(levelColor),
+                                        AlwaysStoppedAnimation(levelColor),
                                     minHeight: 6,
                                   ),
                                 ),
